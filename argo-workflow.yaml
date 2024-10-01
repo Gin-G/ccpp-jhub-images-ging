@@ -39,7 +39,7 @@ spec:
       command: ["/kaniko/executor"]
       args:
       - "--context=git://github.com/Gin-G/ccpp-jhub-images-ging.git"
-      - "--dockerfile=images/base-hub/Containerfile"
+      - "--dockerfile=images/base-image/Containerfile"
       - "--destination=docker.io/ncging/jhub-base--kaniko:{{inputs.parameters.DATE_TAG}}"
       # Add more build arguments as needed
       env:
