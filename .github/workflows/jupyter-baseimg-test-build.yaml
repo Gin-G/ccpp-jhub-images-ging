@@ -80,13 +80,14 @@ jobs:
         
         if [[ "${{ env.WORKFLOW_STATUS }}" != "Succeeded" ]]; then
           echo "Argo Workflow failed or errored"
+          echo "Keeping workflow ${{ env.WORKFLOW_NAME }} for investigation"
           exit 1
         fi
         
         echo "Argo Workflow succeeded"
 
     - name: Clean up Argo Workflow
-      if: always()
+      if: success()
       run: |
         echo "Deleting Argo Workflow ${{ env.WORKFLOW_NAME }}"
         argo delete -n argo ${{ env.WORKFLOW_NAME }}
