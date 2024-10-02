@@ -34,7 +34,7 @@ spec:
       command: ["/kaniko/executor"]
       args:
       - "--context=git://github.com/Gin-G/ccpp-jhub-images-ging.git"
-      - "--context-sub-path=${IMAGE_PATH}"
+      - "--context-sub-path={{inputs.parameters.IMAGE_PATH}}"
       - "--dockerfile=Containerfile"
       - "--no-push"
       # Add more build arguments as needed
