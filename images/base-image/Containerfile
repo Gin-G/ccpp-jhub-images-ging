@@ -100,7 +100,7 @@ COPY packages/requirements.txt /tmp/
 # Install pip packages
 RUN ${CONDA_DIR}/bin/pip install --no-cache -r requirements.txt
 
-# Copy the initial condarc file over to define conda congiruation
+# Copy the initial condarc file over to define conda configuration
 COPY --chown="${NB_UID}:${NB_GID}" configs/.condarc "${CONDA_DIR}/.condarc"
 
 # Update conda
