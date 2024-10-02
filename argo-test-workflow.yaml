@@ -33,6 +33,7 @@ spec:
       - "--context=git://github.com/Gin-G/ccpp-jhub-images-ging.git"
       - "--context-sub-path=images/base-image/"
       - "--dockerfile=Containerfile"
+      - "--no-push"
       # Add more build arguments as needed
       volumeMounts:
       - name: kubeconfig
