@@ -4,7 +4,7 @@ metadata:
   generateName: kaniko-test-build-
   namespace: argo
 spec:
-  entrypoint: build-and-push
+  entrypoint: test-build
   # Use a specific service account that has access to the required secrets
   serviceAccountName: argo-workflows
 
