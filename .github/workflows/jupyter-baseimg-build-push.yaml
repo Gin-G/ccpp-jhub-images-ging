@@ -4,7 +4,7 @@
 name: JHub Base Build & Push
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "main" ]
 
 jobs:
   docker-build-and-test:
@@ -80,3 +80,17 @@ jobs:
         fi
         
         echo "Argo Workflow succeeded"
+
+    - name: Clean up Argo Workflow
+      if: always()
+      run: |
+        echo "Deleting Argo Workflow ${{ env.WORKFLOW_NAME }}"
+        argo delete -n argo ${{ env.WORKFLOW_NAME }}
+        
+        # Wait for workflow and pods to be deleted
+        while argo get -n argo ${{ env.WORKFLOW_NAME }} &>/dev/null; do
+          echo "Waiting for workflow to be deleted..."
+          sleep 5
+        done
+        
+        echo "Workflow deleted successfully"

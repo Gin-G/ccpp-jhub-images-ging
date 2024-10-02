@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: kaniko-test-build-
+  namespace: argo
+spec:
+  entrypoint: build-and-push
+  # Use a specific service account that has access to the required secrets
+  serviceAccountName: argo-workflows
+
+  # Define arguments to accept GitHub secrets
+  arguments:
+    parameters:
+    - name: DATE_TAG
+
+  templates:
+  - name: test-build
+    steps:
+    - - name: test-build-image
+        template: kaniko
+        arguments:
+          parameters:
+          - name: DATE_TAG
+            value: "{{workflow.parameters.DATE_TAG}}"
+  - name: kaniko
+    inputs:
+      parameters:
+      - name: DATE_TAG
+    container:
+      image: gcr.io/kaniko-project/executor:latest
+      command: ["/kaniko/executor"]
+      args:
+      - "--context=git://github.com/Gin-G/ccpp-jhub-images-ging.git"
+      - "--context-sub-path=images/base-image/"
+      - "--dockerfile=Containerfile"
+      # Add more build arguments as needed
+      volumeMounts:
+      - name: kubeconfig
+        mountPath: /root/.kube
+        readOnly: true
+    volumes:
+    - name: kubeconfig
+      secret:
+        secretName: kubeconfig-secret
+        items:
+        - key: config
+          path: config
