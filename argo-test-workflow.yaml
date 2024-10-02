@@ -29,6 +29,7 @@ spec:
     inputs:
       parameters:
       - name: DATE_TAG
+      - name: IMAGE_PATH
     container:
       image: gcr.io/kaniko-project/executor:latest
       command: ["/kaniko/executor"]
