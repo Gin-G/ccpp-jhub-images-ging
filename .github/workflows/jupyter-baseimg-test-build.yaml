@@ -10,9 +10,6 @@ on:
     branches:
       - dev
 
-env:
-  IMAGE_PATH: images/base-image/
-
 jobs:
   docker-build-and-test:
     runs-on: gh-arc-runners-ccpp-jhub-runner
@@ -42,6 +39,8 @@ jobs:
     - name: Submit Argo Workflow
       env:
         DATE_TAG: ${{ steps.date.outputs.date }}
+        IMAGE_PATH: images/base-image/
+
       run: |
         cleanup() {
           # Check if the process exists before trying to kill it

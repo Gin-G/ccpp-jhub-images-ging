@@ -91,7 +91,7 @@ RUN echo "Installing Mambaforge..." \
     && fix-permissions "${CONDA_DIR}" \
     && fix-permissions "/home/${NB_USER}"
 
-# Change to /tmp to work out
+# Change to /tmp to COPY files to
 WORKDIR /tmp
 
 # Copy pip and conda packages in to tmp
