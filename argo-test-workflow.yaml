@@ -12,6 +12,7 @@ spec:
   arguments:
     parameters:
     - name: DATE_TAG
+    - name: IMAGE_PATH
 
   templates:
   - name: test-build
@@ -22,6 +23,8 @@ spec:
           parameters:
           - name: DATE_TAG
             value: "{{workflow.parameters.DATE_TAG}}"
+          - name: IMAGE_PATH
+            value: "{{workflow.parameters.IMAGE_PATH}}"
   - name: kaniko
     inputs:
       parameters:
@@ -31,7 +34,7 @@ spec:
       command: ["/kaniko/executor"]
       args:
       - "--context=git://github.com/Gin-G/ccpp-jhub-images-ging.git"
-      - "--context-sub-path=images/base-image/"
+      - "--context-sub-path=${IMAGE_PATH}"
       - "--dockerfile=Containerfile"
       - "--no-push"
       # Add more build arguments as needed

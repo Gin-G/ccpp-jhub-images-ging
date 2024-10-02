@@ -5,7 +5,13 @@ name: JHub Base Build Test
 
 on:
   push:
-    branches: [ "dev" ]
+    paths:
+      - images/base-image/**
+    branches:
+      - dev
+
+env:
+  IMAGE_PATH: images/base-image/
 
 jobs:
   docker-build-and-test:
@@ -49,6 +55,7 @@ jobs:
         
         workflow_name=$(argo submit --namespace argo argo-test-workflow.yaml \
           -p DATE_TAG="${DATE_TAG}" \
+          -p IMAGE_PATH="${IMAGE_PATH}" \
           --output name)
         echo "WORKFLOW_NAME=$workflow_name" >> $GITHUB_ENV
         
