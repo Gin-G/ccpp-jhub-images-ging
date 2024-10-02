@@ -125,7 +125,7 @@ RUN chown root:root /srv/*
 # Cleanup files that were already installed
 RUN rm -rf /tmp/requirements.txt
 
-# Set the default user to jovyan and make home /hom/jovyan
+# Set the default user to jovyan and make home /home/jovyan
 USER ${NB_USER}
 WORKDIR ${HOME}
 
