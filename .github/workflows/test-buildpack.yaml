@@ -1,0 +1,26 @@
+# This workflow builds docker images and pushes them to a Docker Hub Repository
+# This workflow is specific to the base-image directory and image
+# Set the workflow name
+name: Buildpack test
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  docker-build-and-test:
+    runs-on: gh-arc-runners-ccpp-jhub-runner
+    steps:
+        - name: Checkout code from a pull request or push
+          uses: actions/checkout@v3
+    
+        - name: Get the current date for an image tag
+          id: date
+          run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
+        - name: Apt Install
+          run: |
+            sudo add-apt-repository ppa:cncf-buildpacks/pack-cli && \
+            sudo apt-get update && \
+            sudo apt-get install -y pack-cli && \
+            cd /images/base-image && \
+            pack build test-app --builder ncote/test-buildpack:${{ steps.date.outputs.date }}

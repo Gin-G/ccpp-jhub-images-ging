@@ -202,7 +202,7 @@ RUN rm -rf /tmp/cisl-cloud-base.yml && \
     rm -rf /tmp/r-4.3.yml && \
     rm -rf /tmp/requirements.txt
 
-# Set the default user to jovyan and make home /hom/jovyan
+# Set the default user to jovyan and make home /home/jovyan
 USER ${NB_USER}
 WORKDIR ${HOME}
 

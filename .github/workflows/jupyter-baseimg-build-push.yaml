@@ -4,7 +4,10 @@
 name: JHub Base Build & Push
 on:
   push:
-    branches: [ "main" ]
+    paths:
+      - images/base-image/**
+    branches:
+      - main
 
 jobs:
   docker-build-and-test:
@@ -37,6 +40,7 @@ jobs:
         DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         DATE_TAG: ${{ steps.date.outputs.date }}
+        IMAGE_PATH: images/base-image/
       run: |
         cleanup() {
           # Check if the process exists before trying to kill it
@@ -52,6 +56,7 @@ jobs:
           -p DOCKERHUB_USERNAME="${DOCKERHUB_USERNAME}" \
           -p DOCKERHUB_TOKEN="${DOCKERHUB_TOKEN}" \
           -p DATE_TAG="${DATE_TAG}" \
+          -p IMAGE_PATH="${IMAGE_PATH}" \
           --output name)
         echo "WORKFLOW_NAME=$workflow_name" >> $GITHUB_ENV
         
@@ -76,13 +81,14 @@ jobs:
         
         if [[ "${{ env.WORKFLOW_STATUS }}" != "Succeeded" ]]; then
           echo "Argo Workflow failed or errored"
+          echo "Keeping workflow ${{ env.WORKFLOW_NAME }} for investigation"
           exit 1
         fi
         
         echo "Argo Workflow succeeded"
 
     - name: Clean up Argo Workflow
-      if: always()
+      if: success()
       run: |
         echo "Deleting Argo Workflow ${{ env.WORKFLOW_NAME }}"
         argo delete -n argo ${{ env.WORKFLOW_NAME }}

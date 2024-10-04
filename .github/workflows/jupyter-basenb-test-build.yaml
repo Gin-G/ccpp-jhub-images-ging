@@ -12,28 +12,91 @@ on:
     branches:
       - dev
 
-env:
-  BRANCH_NAME: ${{ github.ref_name }}
-
-# Define the actions that are going to take place as part of this workflow    
 jobs:
-  # Name the job(s)
-  podman-build-base-notebook:
-    # Define where the job should run in this case it will be run on the latest ubuntu image
-    runs-on: self-hosted
-    # Set the steps to take in order
+  docker-build-and-test:
+    runs-on: gh-arc-runners-ccpp-jhub-runner
     steps:
-      # Step 1 is to checkout the github repo used to build the Container Image
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      # Get the date to apply to image tag
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d.%H')" >> $GITHUB_OUTPUT
-      - name: Build Podman image
-        run: |
-          podman build -f images/base-notebook/Containerfile -t hub.k8s.ucar.edu/cislcloudpilot/cisl-cloud-base:${{ steps.date.outputs.date }} images/base-notebook/. --no-cache --format=docker
-      - name: Create pull request to merge dev in to main
-        run: gh pr view ${{ env.BRANCH_NAME }} && gh pr reopen ${{ env.BRANCH_NAME }} || gh pr create -B main -H ${{ env.BRANCH_NAME }} --title 'Test build successful. Merge CPU notebook update from dev into main' --body 'Created by Github action'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout code from a pull request or push
+      uses: actions/checkout@v3
+
+    - name: Get the current date for an image tag
+      id: date
+      run: echo "date=$(date +'%Y-%m-%d.%H.%M')" >> $GITHUB_OUTPUT
+    - name: Apt Install
+      run: |
+        sudo apt update && \
+        sudo apt install -y curl jq
+
+    - name: Install Argo CLI
+      run: |
+        # Add commands to install Argo CLI here
+        curl -sLO https://github.com/argoproj/argo-workflows/releases/download/v3.5.11/argo-linux-amd64.gz
+        # Unzip
+        gunzip argo-linux-amd64.gz
+        # Make binary executable
+        chmod +x argo-linux-amd64
+        # Move binary to path
+        sudo mv ./argo-linux-amd64 /usr/local/bin/argo
+
+    - name: Submit Argo Workflow
+      env:
+        DATE_TAG: ${{ steps.date.outputs.date }}
+        IMAGE_PATH: images/base-notebook/
+
+      run: |
+        cleanup() {
+          # Check if the process exists before trying to kill it
+          if ps -p $log_pid > /dev/null 2>&1; then
+            kill $log_pid
+          fi
+        }
+        
+        # Set up trap to ensure cleanup happens
+        trap cleanup EXIT
+        
+        workflow_name=$(argo submit --namespace argo argo-test-workflow.yaml \
+          -p DATE_TAG="${DATE_TAG}" \
+          -p IMAGE_PATH="${IMAGE_PATH}" \
+          --output name)
+        echo "WORKFLOW_NAME=$workflow_name" >> $GITHUB_ENV
+        
+        # Stream logs in real-time
+        argo logs -n argo $workflow_name -f &
+        log_pid=$!
+        
+        # Wait for workflow to complete
+        while true; do
+          status=$(argo get -n argo $workflow_name -o json | jq -r '.status.phase')
+          if [[ "$status" == "Succeeded" || "$status" == "Failed" || "$status" == "Error" ]]; then
+            break
+          fi
+          sleep 10
+        done
+        
+        echo "WORKFLOW_STATUS=$status" >> $GITHUB_ENV
+
+    - name: Check Argo Workflow final status
+      run: |
+        echo "Workflow final status: ${{ env.WORKFLOW_STATUS }}"
+        
+        if [[ "${{ env.WORKFLOW_STATUS }}" != "Succeeded" ]]; then
+          echo "Argo Workflow failed or errored"
+          echo "Keeping workflow ${{ env.WORKFLOW_NAME }} for investigation"
+          exit 1
+        fi
+        
+        echo "Argo Workflow succeeded"
+
+    - name: Clean up Argo Workflow
+      if: success()
+      run: |
+        echo "Deleting Argo Workflow ${{ env.WORKFLOW_NAME }}"
+        argo delete -n argo ${{ env.WORKFLOW_NAME }}
+        
+        # Wait for workflow and pods to be deleted
+        while argo get -n argo ${{ env.WORKFLOW_NAME }} &>/dev/null; do
+          echo "Waiting for workflow to be deleted..."
+          sleep 5
+        done
+        
+        echo "Workflow deleted successfully"
