@@ -10,7 +10,7 @@ on:
       - main
 
 jobs:
-  docker-build-and-test:
+  kaniko-build-test:
     runs-on: gh-arc-runners-ccpp-jhub-runner
     steps:
     - name: Checkout code from a pull request or push
@@ -41,6 +41,7 @@ jobs:
         DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         DATE_TAG: ${{ steps.date.outputs.date }}
         IMAGE_PATH: images/base-image/
+        IMAGE_NAME: jhub-base
       run: |
         cleanup() {
           # Check if the process exists before trying to kill it
@@ -57,6 +58,7 @@ jobs:
           -p DOCKERHUB_TOKEN="${DOCKERHUB_TOKEN}" \
           -p DATE_TAG="${DATE_TAG}" \
           -p IMAGE_PATH="${IMAGE_PATH}" \
+          -p IMAGE_NAME="${IMAGE_NAME}" \
           --output name)
         echo "WORKFLOW_NAME=$workflow_name" >> $GITHUB_ENV
         
